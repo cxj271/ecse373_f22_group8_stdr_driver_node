@@ -2,14 +2,17 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/LaserScan.h"
-
 #include <sstream>
 
+
+
 ros::Publisher *p_cmd_vel_pub;
-geometry_msgs::Twist desired;
-geometry_msgs::Twist cmd_vel;
-sensor_msgs::LaserScan laser;  
-bool found_laser = false; 
+
+// Need these to be global messages
+geometry_msgs::Twist desired;  // the desired velocity taken from rqt_gui
+geometry_msgs::Twist cmd_vel;  // command velocity to the robot. may differ from the desired
+sensor_msgs::LaserScan laser;  // readings from the lidar
+bool found_laser = false;      // only runs the part of the while loop that warns and stops if the lidar was set up
 
 
 
@@ -17,13 +20,15 @@ void desiredVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
    desired.linear = msg->linear;
    desired.angular = msg->angular;
-   ROS_INFO("Forward velocity is %2.2f; Angular velocity %2.2f]", msg->linear.x, msg->angular.z);
+   //ROS_INFO("Desired forward velocity is %2.2f; Desired angular velocity %2.2f]", msg->linear.x, msg->angular.z);
    //p_cmd_vel_pub->publish(*msg);
 }
 
 void LaserScanCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
+  // need this to avoid "Segmentation fault (core dumped)" error
    found_laser = true;
+   ROS_DEBUG_ONCE("Thanks for making the robot!");
    laser.ranges=msg->ranges;
    //ROS_INFO("LaserScan sequence number is: %i", msg->header.seq);
 }
@@ -69,7 +74,7 @@ int main(int argc, char **argv)
  * is the number of messages that will be buffered up before beginning to throw
  * away the oldest ones.
  */
- 
+
  ros::Subscriber sub = n.subscribe("des_vel", 1000, desiredVelCallback);
  ros::Subscriber sub1 = n.subscribe("laser_1", 1000, LaserScanCallback);
 
@@ -99,6 +104,8 @@ int main(int argc, char **argv)
   * A count of how many messages we have sent. This is used to create
   * a unique string for each message.
   */
+
+// initializing variables
  int count = 0;
  bool close = false;
  bool stop = false;
@@ -107,40 +114,51 @@ int main(int argc, char **argv)
    /**
     * This is a message object. You stuff it with data, and then publish it.
     */
-  
+
+    //set the command to the desired
     cmd_vel = desired;
-  
+
+    //reset to false
     close = false;
     stop = false;
-    
+
    if (found_laser){
-    for (int i=115; i<157; i++){
-      
+      // looks for objects plus/minus ~20 degrees from straight ahead
+    for (int i=115; i<156; i++){
+
       	if (laser.ranges[i] < 1.5){
       	  close = true;
-      	 
+
       	  if(laser.ranges[i] < 0.85){
       	    stop = true;
       	  }
       	}
      }
-     	
+
       	if (stop && desired.linear.x > 0){
       	ROS_ERROR("Too close to wall, stop");
-      	
+
         cmd_vel.linear.x = 0;
         }
-        
+
         else if (close){
         ROS_WARN("slow down!! wall ahead");
         }
-        
+
+        else {
+          ROS_INFO("You're Good...");
+        }
+
         cmd_vel_pub.publish(cmd_vel);
 
    }
- 
-      
-      
+
+   else if (!found_laser){
+     ROS_FATAL("Add a robot with lidar!!");
+   }
+
+
+
       ros::spinOnce();
 
     loop_rate.sleep();

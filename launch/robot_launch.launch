@@ -1,5 +1,5 @@
 <launch>
 
-<node name="stdr_driver_node" type="stdr_driver_node" pkg="stdr_driver_node" ns="robot0" />
+   <node name="stdr_driver_node" type="stdr_driver_node" pkg="stdr_driver_node" ns="robot0" output="screen"/>
 
 </launch>
