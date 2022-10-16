@@ -26,7 +26,7 @@ To control the robot, run:
 **How to setup control for multiple robots**
 1. Run the initial roslaunch with the sim:
 
-      roslaunch stdr_driver_node robot_launch_w_sim.launch
+          roslaunch stdr_driver_node robot_launch_w_sim.launch
 
 2. This will start the stdr_driver_node for robot0 and open the STDR simulator rqt_gui
 3. Next, add robot to the STDR rqt_gui:
@@ -36,7 +36,9 @@ To control the robot, run:
     - then click on the map to place the robot
 4. Repeat step 3 to place additional robots in the map (robot1, robot2, etc...)
 5. Run the roslaunch to create the stdr_driver_node for the additional robots
+
         roslaunch stdr_driver_node robot_launch.launch robot_ns:="robot1"
+
 6. Repeat steps 3-5 for additional robots, incrementing the robot_ns argument when launching the stdr_driver_node
 
 **How it works:**
